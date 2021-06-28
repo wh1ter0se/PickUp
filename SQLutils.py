@@ -26,8 +26,6 @@ def get_table_df(table_name):
                             con=sql_engine)
     return stored_df
 
-
-
 class User():
     def __init__(self,ID):
         self.ID = ID
@@ -102,13 +100,19 @@ def insert_friendship(userA_ID,userB_ID):
     print('Friendship ' + str(ID) + ' inserted successfully.')
 
 def get_friends(userID):
-    query = 'SELECT * FROM friendship WHERE userA_ID=\'' + str(userID) + '\''
+    query = 'SELECT * FROM friendship WHERE userA_ID=' + str(userID)
     A_df = pd.read_sql(sql=query,con=sql_engine)
     A_friends = A_df.loc[:,'userB_ID']
-    query = 'SELECT * FROM friendship WHERE userB_ID=\'' + str(userID) + '\''
+    query = 'SELECT * FROM friendship WHERE userB_ID=' + str(userID)
     B_df = pd.read_sql(sql=query,con=sql_engine)
     B_friends = B_df.loc[:,'userA_ID']
-    return pd.concat([A_friends,B_friends],axis=0)
+    friend_IDs = pd.concat([A_friends,B_friends],axis=0).to_numpy()
+    friends = pd.DataFrame()
+    for friend_ID in friend_IDs:
+        subquery = 'SELECT * FROM user WHERE ID=' + str(friend_ID)
+        friend = pd.read_sql(sql=subquery,con=sql_engine)
+        friends = pd.concat([friends,friend],axis=0)
+    return friends
 
 def get_leaderboard(sortby='goodgames'):
     if (sortby != 'gamesplayed') and (sortby != 'gameswon'):
