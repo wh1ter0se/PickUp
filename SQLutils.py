@@ -75,15 +75,23 @@ def insert_user(firstname,lastname,username):
     init_ts = time.time()
     max_ID = pd.read_sql(sql='SELECT MAX(ID) FROM user', con=sql_engine).iloc[0,0]
     if max_ID is not None:
-        ID = int(max_ID) + 1
+        uesr_ID = int(max_ID) + 1
     else:
-        ID = 1
+        user_ID = 1
     query = '''INSERT INTO user (ID, firstname, lastname, username, usersince)
         VALUES ('''
-    query += str(ID) + ',\'' + firstname + '\',\'' + str(lastname) + '\',\'' + str(username) + '\',' + str(init_ts) + ')'
-    query = str(query)
+    query += str(user_ID) + ',\'' + firstname + '\',\'' + str(lastname) + '\',\'' + str(username) + '\',' + str(init_ts) + ')'
     sql_engine.connect().execute(query)
-    print('User ' + str(ID) + ' inserted successfully.')
+    print('User ' + str(user_ID) + ' inserted successfully.')
+
+def get_all_users():
+    return get_table_df('user')
+
+def get_leaderboard(sortby='goodgames'):
+    if (sortby != 'gamesplayed') and (sortby != 'gameswon'):
+        sortby = 'goodgames'
+    query = 'SELECT * FROM user ORDER BY ' + str(sortby) + ' DESC'
+    return pd.read_sql(sql=query,con=sql_engine)
 
 def insert_friendship(userA_ID,userB_ID):
     init_ts = time.time()
@@ -99,11 +107,14 @@ def insert_friendship(userA_ID,userB_ID):
     sql_engine.connect().execute(query)
     print('Friendship ' + str(ID) + ' inserted successfully.')
 
-def get_friends(userID):
-    query = 'SELECT * FROM friendship WHERE userA_ID=' + str(userID)
+def get_all_friendships():
+    return get_table_df('friendships')
+    
+def get_friends(user_ID):
+    query = 'SELECT * FROM friendship WHERE userA_ID=' + str(user_ID)
     A_df = pd.read_sql(sql=query,con=sql_engine)
     A_friends = A_df.loc[:,'userB_ID']
-    query = 'SELECT * FROM friendship WHERE userB_ID=' + str(userID)
+    query = 'SELECT * FROM friendship WHERE userB_ID=' + str(user_ID)
     B_df = pd.read_sql(sql=query,con=sql_engine)
     B_friends = B_df.loc[:,'userA_ID']
     friend_IDs = pd.concat([A_friends,B_friends],axis=0).to_numpy()
@@ -114,11 +125,41 @@ def get_friends(userID):
         friends = pd.concat([friends,friend],axis=0)
     return friends
 
-def get_leaderboard(sortby='goodgames'):
-    if (sortby != 'gamesplayed') and (sortby != 'gameswon'):
-        sortby = 'goodgames'
-    query = 'SELECT * FROM user ORDER BY ' + str(sortby) + ' DESC'
-    return pd.read_sql(sql=query,con=sql_engine)
+def insert_roster(host_ID):
+    max_ID = pd.read_sql(sql='SELECT MAX(ID) FROM roster', con=sql_engine).iloc[0,0]
+    if max_ID is not None:
+        roster_ID = int(max_ID) + 1
+    else:
+        roster_ID = 1
+    query = 'INSERT INTO roster (ID, user_ID, ishost) VALUES ('
+    query += str(roster_ID) + ',' + str(host_ID) + ',True)'
+    sql_engine.connect().execute(query)
+    print('Roster ' + str(roster_ID) + ' inserted successfully.')
+
+class Roster():
+    def __init__(self,ID):
+        self.ID = ID
+        self.refresh()
+        
+    def refresh(self):
+        self.users = self.get_users()
+
+    def get_users(self):
+        query = 'SELECT user_ID FROM roster WHERE ID=' + str(self.ID)
+        user_IDs = pd.read_sql(sql=query, con=sql_engine).to_numpy()
+        out_df = pd.DataFrame()
+        for user_ID in user_IDs:
+            subquery = 'SELECT * FROM user WHERE ID = ' + str(user_ID)
+            user = pd.read_sql(sql=subquery, con=sql_engine).to_numpy()
+            out_df = pd.concat([out_df,user],axis=0)
+        return out_df
+
+    def add_user(self,user_ID):
+        query = 'INSERT INTO roster (ID, user_ID) VALUES ('
+        query += str(self.ID) + ',' + str(user_ID) +  ')'
+        sql_engine.connect().execute(query)
+        print('User ' + str(user_ID) + ' added to roster ' + str(self.ID) + ' successfully.')
+
 
 class Court():
     def __init__(self,ID):
@@ -162,6 +203,9 @@ def all_court_IDs():
     query = 'SELECT ID FROM court'
     return pd.read_sql(sql=query,con=sql_engine).loc[:,'ID']
 
+def get_all_courts():
+    return get_table_df('court')
+
 def plot_all_courts():
     lat = []
     lng = []
@@ -188,10 +232,14 @@ def plot_all_courts():
 #print(court.df)
 #court.add_games_played(1)
 #print(court.df)
-plot_all_courts()
+#plot_all_courts()
 #insert_user('Billy','Bob','bbob')
 print(get_leaderboard())
 print(get_friends(1))
+#insert_roster(1)
+roster = Roster(1)
+#roster.add_user(2)
+print(roster.users)
 #user = User(1)
 #print(user.df)
 #user.add_games_won(1)
