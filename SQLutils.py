@@ -84,6 +84,11 @@ def insert_user(firstname,lastname,username):
     sql_engine.connect().execute(query)
     print('User ' + str(user_ID) + ' inserted successfully.')
 
+def get_user_ID(username):
+    query = 'SELECT ID FROM user WHERE username=\'' + username + '\''
+    user_ID = pd.read_sql(sql=query,con=sql_engine).iloc[0,0]
+    return user_ID
+
 def get_all_users():
     return get_table_df('user')
 
@@ -234,8 +239,8 @@ def plot_all_courts():
 #print(court.df)
 #plot_all_courts()
 #insert_user('Billy','Bob','bbob')
-print(get_leaderboard())
-print(get_friends(1))
+#print(get_leaderboard())
+#print(get_friends(1))
 #insert_roster(1)
 #roster = Roster(1)
 #roster.add_user(2)
