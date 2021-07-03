@@ -75,7 +75,7 @@ def insert_user(firstname,lastname,username):
     init_ts = time.time()
     max_ID = pd.read_sql(sql='SELECT MAX(ID) FROM user', con=sql_engine).iloc[0,0]
     if max_ID is not None:
-        uesr_ID = int(max_ID) + 1
+        user_ID = int(max_ID) + 1
     else:
         user_ID = 1
     query = '''INSERT INTO user (ID, firstname, lastname, username, usersince)
@@ -86,7 +86,11 @@ def insert_user(firstname,lastname,username):
 
 def get_user_ID(username):
     query = 'SELECT ID FROM user WHERE username=\'' + username + '\''
-    user_ID = pd.read_sql(sql=query,con=sql_engine).iloc[0,0]
+    df = pd.read_sql(sql=query,con=sql_engine)
+    if df.shape[0] != 0:
+        user_ID = df.iloc[0,0]
+    else:
+        user_ID = None
     return user_ID
 
 def get_all_users():

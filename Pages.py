@@ -49,7 +49,37 @@ class LoginPage(Page):
         Page.__init__(self,user_ID,name,funcs,labels,init_func=self.init_func)
 
     def init_func(self):
-        self.new_page = SplashPage(self.user_ID)
+        if self.user_ID is not None:
+            self.new_page = SplashPage(self.user_ID)
+        else:
+            print('Username not recognized')
+            choice = input('Create new user? (y/n)')
+            if choice == 'y':
+                self.new_page = CreateUserPage()
+            else:
+                self.new_page = LoginPage()
+
+class CreateUserPage(Page):
+    def __init__(self):
+        name = 'Create User'
+        Page.init_message(name)
+        funcs = []
+        labels = []
+        self.user_ID = self.create_user()
+        Page.__init__(self,self.user_ID,name,funcs,labels,init_func=self.init_func)
+
+    def create_user(self):
+        username = input('Username:')
+        while SQLutils.get_user_ID(username) is not None:
+            print('That username is taken')
+            username = input ('Username:')
+        firstname = input('First name:')
+        lastname = input('Last name:')
+        return SQLutils.insert_user(firstname,lastname,username)
+
+    def init_func(self):
+       self.new_page = SplashPage(self.user_ID)
+        
 
 class SplashPage(Page):
     def __init__(self,user_ID):
