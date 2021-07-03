@@ -130,7 +130,7 @@ def get_friends(user_ID):
         friends = pd.concat([friends,friend],axis=0)
     return friends
 
-def insert_roster(host_ID):
+def create_roster(host_ID):
     max_ID = pd.read_sql(sql='SELECT MAX(ID) FROM roster', con=sql_engine).iloc[0,0]
     if max_ID is not None:
         roster_ID = int(max_ID) + 1
@@ -140,6 +140,18 @@ def insert_roster(host_ID):
     query += str(roster_ID) + ',' + str(host_ID) + ',True)'
     sql_engine.connect().execute(query)
     print('Roster ' + str(roster_ID) + ' inserted successfully.')
+    return roster_ID
+
+def get_roster(roster_ID):
+    query = 'SELECT * FROM roster WHERE ID=' + str(roster_ID)
+    return pd.read_sql(sql=query,con=sql_engine)
+    
+#def add_to_roster(roster_ID,user_ID):
+#    query = 'INSERT INTO roster (ID, user_ID, ishost) VALUES ('
+#    query += str(roster_ID) + ',' + str(user_ID) + ',False)'
+#    sql_engine.connect().execute(query)
+#    print('Roster ' + str(roster_ID) + ' inserted successfully.')
+
 
 class Roster():
     def __init__(self,ID):
@@ -154,8 +166,8 @@ class Roster():
         user_IDs = pd.read_sql(sql=query, con=sql_engine).to_numpy()
         out_df = pd.DataFrame()
         for user_ID in user_IDs:
-            subquery = 'SELECT * FROM user WHERE ID = ' + str(user_ID)
-            user = pd.read_sql(sql=subquery, con=sql_engine).to_numpy()
+            subquery = 'SELECT * FROM user WHERE ID = ' + str(user_ID[0])
+            user = pd.read_sql(sql=subquery, con=sql_engine)
             out_df = pd.concat([out_df,user],axis=0)
         return out_df
 
@@ -164,7 +176,6 @@ class Roster():
         query += str(self.ID) + ',' + str(user_ID) +  ')'
         sql_engine.connect().execute(query)
         print('User ' + str(user_ID) + ' added to roster ' + str(self.ID) + ' successfully.')
-
 
 class Court():
     def __init__(self,ID):
@@ -211,6 +222,11 @@ def all_court_IDs():
 def get_all_courts():
     return get_table_df('court')
 
+def get_courtname(court_ID):
+    query = 'SELECT courtname FROM court WHERE ID=' + str(court_ID)
+    courtname = pd.read_sql(sql=query,con=sql_engine).iloc[0,0]
+    return courtname
+
 def plot_all_courts():
     lat = []
     lng = []
@@ -226,6 +242,40 @@ def plot_all_courts():
     gmap.apikey = maps_API_key
     gmap.draw('C:\\Users\\camel\\Documents\\Git\\PickUp\\gmap.html')
 
+def insert_game(court_ID,roster_ID,start_ts,ts_length,matches=1,reservation_ID=None):
+    max_ID = pd.read_sql(sql='SELECT MAX(ID) FROM game', con=sql_engine).iloc[0,0]
+    if max_ID is not None:
+        ID = int(max_ID) + 1
+    else:
+        ID = 1
+    end_ts = start_ts + ts_length
+    if reservation_ID is None:
+        query = 'INSERT INTO game (ID, court_ID, roster_ID, start_ts, end_ts, matches) VALUES ('
+        query += str(ID) + ',' + str(court_ID) + ',' + str(roster_ID) + ',' + str(start_ts) + ',' + str(end_ts) + ',' + str(matches) + ')'
+    else:
+        query = 'INSERT INTO game (ID, court_ID, roster_ID, reservation_ID, start_ts, end_ts) VALUES ('
+        query += str(ID) + ',' + str(court_ID) + ',' + str(roster_ID) + ',' + str(reservation_ID) + ',' + str(start_ts) + ',' + str(end_ts) + ')'
+    sql_engine.connect().execute(query)
+    print('Court ' + str(ID) + ' inserted successfully.')
+    return ID
+
+class Game():
+    def __init__(self,ID):
+        self.ID = ID
+        self.refresh()
+
+    def refresh(self):
+        query = '''SELECT * FROM game
+               WHERE ID=''' + str(self.ID)
+        df = pd.read_sql(sql=query, con=sql_engine)
+        self.court_ID = df.loc[0,'court_ID']
+        self.roster_ID = df.loc[0,'roster_ID']
+        self.reservation_ID = df.loc[0, 'reservation_ID']
+        self.start_ts = df.loc[0,'start_ts']
+        self.end_ts = df.loc[0,'end_ts']
+        self.matches = df.loc[0,'matches']
+
+
 #print(get_table_df('user'))
 #print(gmaps.geocode('Brittingham Park - Basketball Court'))
 
@@ -237,7 +287,7 @@ def plot_all_courts():
 #print(court.df)
 #court.add_games_played(1)
 #print(court.df)
-#plot_all_courts()
+#print(get_all_courts())
 #insert_user('Billy','Bob','bbob')
 #print(get_leaderboard())
 #print(get_friends(1))
@@ -249,3 +299,5 @@ def plot_all_courts():
 #print(user.df)
 #user.add_games_won(1)
 #print(user.df)
+#start_ts = time.time() + 30 * 60
+#insert_game(2,)

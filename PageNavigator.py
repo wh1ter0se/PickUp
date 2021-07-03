@@ -4,6 +4,7 @@ curr_page = Pages.LoginPage()
 
 while True:
     if curr_page.init_func is not None:
+        print()
         curr_page.init_func()
     if curr_page.has_funcs:
         curr_page.UI_selection()
