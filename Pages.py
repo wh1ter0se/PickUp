@@ -87,9 +87,11 @@ class SplashPage(Page):
         #user_ID = prev_page.user_ID
         self.user_ID = user_ID
         funcs = [self.goto_friends,
-                 self.goto_games]
+                 self.goto_games,
+                 self.goto_options]
         labels = ['Friends',
-                  'Games']
+                  'Games',
+                  'Settings']
         Page.__init__(self,user_ID,name,funcs,labels,init_func=self.init_func)
         #self.prev_page = prev_page
 
@@ -106,6 +108,9 @@ class SplashPage(Page):
 
     def goto_games(self):
         return GamesPage(prev_page=SplashPage(self.user_ID))
+
+    def goto_options(self):
+        return UserSettingsPage(prev_page=SplashPage(self.user_ID))
 
 class FriendsPage(Page):
 
@@ -238,7 +243,7 @@ class GamesPage(Page):
         for ID in df:
             self.print_game(ID[0])
 
-    def print_game(self,game_ID):
+    def print_game(self,game_ID): 
         game = SQLutils.Game(game_ID)
         print('------------------------------------------------')
         print('[Court]: '+SQLutils.get_courtname(game.court_ID))
@@ -250,4 +255,38 @@ class GamesPage(Page):
         print('[End time]: ' + str(datetime.fromtimestamp(game.end_ts)))
 
     def goto_create_game(self):
-        return CreateGamePage(prev_page=SplashPage(self.user_ID))
+        return CreateGamePage(prev_page=GamesPage(self.prev_page))
+
+class UserSettingsPage(Page):
+    def __init__(self,prev_page):
+        name = 'User Settings'
+        Page.init_message(name)
+        self.user_ID = prev_page.user_ID
+        funcs = [self.update_username,
+                 self.update_firstname,
+                 self.update_lastname]
+        labels = ['Change username',
+                  'Change first name',
+                  'Change last name']
+        Page.__init__(self,self.user_ID,name,funcs,labels,init_func=self.init_func,prev_page=prev_page)
+
+    def init_func(self):
+        self.print_user_vals()
+
+    def print_user_vals(self):
+        user = SQLutils.User(self.user_ID)
+        print('Username: ' + str(user.username))
+        print('First name: ' + str(user.firstname))
+        print('Last name: ' + str(user.lastname))
+
+    def update_username(self):
+        username = input('New username: ')
+        SQLutils.update_username(self.user_ID,username)
+
+    def update_firstname(self):
+        firstname = input('New first name: ')
+        SQLutils.update_firstname(self.user_ID,firstname)
+
+    def update_lastname(self):
+        lastname = input('New last name: ')
+        SQLutils.update_firstname(self.user_ID,lastname)

@@ -84,6 +84,21 @@ def insert_user(firstname,lastname,username):
     sql_engine.connect().execute(query)
     print('User ' + str(user_ID) + ' inserted successfully.')
 
+def update_username(user_ID,username):
+    query = 'UPDATE user SET username=\'' + username + '\' WHERE ID=' + str(user_ID)
+    sql_engine.connect().execute(query)
+    print('Username ' + str(username) + ' updated successfully.')
+
+def update_firstname(user_ID,firstname):
+    query = 'UPDATE user SET firstname=\'' + firstname + '\' WHERE ID=' + str(user_ID)
+    sql_engine.connect().execute(query)
+    print('First name ' + str(firstname) + ' updated successfully.')
+
+def update_lastname(user_ID,lastname):
+    query = 'UPDATE user SET lastname=\'' + lastname + '\' WHERE ID=' + str(user_ID)
+    sql_engine.connect().execute(query)
+    print('Last name ' + str(lastname) + ' updated successfully.')
+
 def get_user_ID(username):
     query = 'SELECT ID FROM user WHERE username=\'' + username + '\''
     df = pd.read_sql(sql=query,con=sql_engine)
