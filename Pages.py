@@ -87,9 +87,9 @@ class SplashPage(Page):
         #user_ID = prev_page.user_ID
         self.user_ID = user_ID
         funcs = [self.goto_friends,
-                 self.goto_create_game]
+                 self.goto_games]
         labels = ['Friends',
-                  'Create Game']
+                  'Games']
         Page.__init__(self,user_ID,name,funcs,labels,init_func=self.init_func)
         #self.prev_page = prev_page
 
@@ -104,8 +104,8 @@ class SplashPage(Page):
     def goto_friends(self):
         return FriendsPage(prev_page=SplashPage(self.user_ID))
 
-    def goto_create_game(self):
-        return CreateGamePage(prev_page=SplashPage(self.user_ID))
+    def goto_games(self):
+        return GamesPage(prev_page=SplashPage(self.user_ID))
 
 class FriendsPage(Page):
 
@@ -201,11 +201,11 @@ class CreateGamePage(Page):
 
     def set_start_ts(self):
         start_ts = input('Start time (in seconds since epoch):')
-        self.init_ts = start_ts
+        self.init_ts = int(start_ts)
 
     def set_length_ts(self):
         length = input('Game length (in minutes):')
-        self.ts_length = length * 60
+        self.ts_length = int(length) * 60
 
     def confirm_game(self):
         if self.court_ID is None:
@@ -220,17 +220,34 @@ class CreateGamePage(Page):
                                  self.matches)
             self.new_page = self.prev_page
 
-'''
 class GamesPage(Page):
     def __init__(self,prev_page):
-        name = 'Games'
+        name = 'Upcoming Games'
         Page.init_message(name)
-        user_ID = prev_page.user_ID
-        funcs = []
-        labels = []
-        Page.__init__(self,user_ID,name,funcs,labels,init_func=self.init_func,prev_page=prev_page)
+        self.user_ID = prev_page.user_ID
+        funcs = [self.goto_create_game]
+        labels = ['Create game']
+        Page.__init__(self,self.user_ID,name,funcs,labels,init_func=self.init_func,prev_page=prev_page)
 
     def init_func(self):
+        self.print_upcoming_games()
 
     def print_upcoming_games(self):
-'''
+        df = SQLutils.get_games(ts_range=[time.time(),None])
+        df = df.loc[:,['ID']].head().to_numpy()
+        for ID in df:
+            self.print_game(ID[0])
+
+    def print_game(self,game_ID):
+        game = SQLutils.Game(game_ID)
+        print('------------------------------------------------')
+        print('[Court]: '+SQLutils.get_courtname(game.court_ID))
+        print('[Players]:')
+        roster = SQLutils.Roster(game.roster_ID)
+        print(roster.get_users())
+        print('[Matches]: ' + str(game.matches))
+        print('[Start time]: ' + str(datetime.fromtimestamp(game.start_ts)))
+        print('[End time]: ' + str(datetime.fromtimestamp(game.end_ts)))
+
+    def goto_create_game(self):
+        return CreateGamePage(prev_page=SplashPage(self.user_ID))

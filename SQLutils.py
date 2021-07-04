@@ -272,16 +272,32 @@ def insert_game(court_ID,roster_ID,start_ts,ts_length,matches=1,reservation_ID=N
     print('Court ' + str(ID) + ' inserted successfully.')
     return ID
 
-'''
-def get_games(ts_range=None):
+def get_games(game_ID=None,court_ID=None,ts_range=None,cols=None):
     query = 'SELECT * FROM game'
     params = []
+    if game_ID is not None:
+        params.append('ID=' + str(game_ID))
+    if court_ID is not None:
+        params.append('court_ID=' + str(court_ID))
     if ts_range is not None:
         start_ts = ts_range[0]
         end_ts = ts_range[1]
-        if start_ts:
-            params.append('')
-'''
+        if start_ts is not None:
+            params.append('start_ts>=' + str(start_ts))
+        if end_ts is not None:
+            params.append('start_ts<=' + str(end_ts))
+    if params:
+        condition = ' WHERE '
+        for param in range(0,len(params)-1):
+            condition += param + ' AND '
+        condition += params[len(params)-1]
+        query += condition
+    #print(query)
+    df = pd.read_sql(sql=query,con=sql_engine)
+    if cols is not None:
+        df = df.loc[:,cols]
+    return df
+    
 
 #print(get_table_df('user'))
 #print(gmaps.geocode('Brittingham Park - Basketball Court'))
@@ -308,3 +324,4 @@ def get_games(ts_range=None):
 #print(user.df)
 #start_ts = time.time() + 30 * 60
 #insert_game(2,)
+#print(get_games(ts_range=[1625296800,None]))
