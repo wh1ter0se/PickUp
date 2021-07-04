@@ -80,7 +80,6 @@ class CreateUserPage(Page):
     def init_func(self):
        self.new_page = SplashPage(self.user_ID)
         
-
 class SplashPage(Page):
     def __init__(self,user_ID):
         name = 'Splash'
@@ -114,8 +113,8 @@ class FriendsPage(Page):
         name = 'Friends'
         Page.init_message(name)
         user_ID = prev_page.user_ID
-        funcs = []
-        labels = []
+        funcs = [self.add_friend]
+        labels = ['Add friend by username']
         Page.__init__(self,user_ID,name,funcs,labels,init_func=self.init_func,prev_page=prev_page)
         self.has_funcs = True
 
@@ -126,6 +125,11 @@ class FriendsPage(Page):
         friends = SQLutils.get_friends(self.user_ID)
         friends = friends.loc[:,['firstname','lastname','username','gamesplayed','gameswon','goodgames']]
         print(friends)
+
+    def add_friend(self):
+        friend_name = input('Input username: ')
+        friend_ID = SQLutils.get_user_ID(friend_name)
+        SQLutils.insert_friendship(self.user_ID,friend_ID)
 
 class CreateGamePage(Page):
 
@@ -215,3 +219,18 @@ class CreateGamePage(Page):
                                  self.ts_length,
                                  self.matches)
             self.new_page = self.prev_page
+
+'''
+class GamesPage(Page):
+    def __init__(self,prev_page):
+        name = 'Games'
+        Page.init_message(name)
+        user_ID = prev_page.user_ID
+        funcs = []
+        labels = []
+        Page.__init__(self,user_ID,name,funcs,labels,init_func=self.init_func,prev_page=prev_page)
+
+    def init_func(self):
+
+    def print_upcoming_games(self):
+'''

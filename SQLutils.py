@@ -134,29 +134,6 @@ def get_friends(user_ID):
         friends = pd.concat([friends,friend],axis=0)
     return friends
 
-def create_roster(host_ID):
-    max_ID = pd.read_sql(sql='SELECT MAX(ID) FROM roster', con=sql_engine).iloc[0,0]
-    if max_ID is not None:
-        roster_ID = int(max_ID) + 1
-    else:
-        roster_ID = 1
-    query = 'INSERT INTO roster (ID, user_ID, ishost) VALUES ('
-    query += str(roster_ID) + ',' + str(host_ID) + ',True)'
-    sql_engine.connect().execute(query)
-    print('Roster ' + str(roster_ID) + ' inserted successfully.')
-    return roster_ID
-
-def get_roster(roster_ID):
-    query = 'SELECT * FROM roster WHERE ID=' + str(roster_ID)
-    return pd.read_sql(sql=query,con=sql_engine)
-    
-#def add_to_roster(roster_ID,user_ID):
-#    query = 'INSERT INTO roster (ID, user_ID, ishost) VALUES ('
-#    query += str(roster_ID) + ',' + str(user_ID) + ',False)'
-#    sql_engine.connect().execute(query)
-#    print('Roster ' + str(roster_ID) + ' inserted successfully.')
-
-
 class Roster():
     def __init__(self,ID):
         self.ID = ID
@@ -180,6 +157,22 @@ class Roster():
         query += str(self.ID) + ',' + str(user_ID) +  ')'
         sql_engine.connect().execute(query)
         print('User ' + str(user_ID) + ' added to roster ' + str(self.ID) + ' successfully.')
+
+def create_roster(host_ID):
+    max_ID = pd.read_sql(sql='SELECT MAX(ID) FROM roster', con=sql_engine).iloc[0,0]
+    if max_ID is not None:
+        roster_ID = int(max_ID) + 1
+    else:
+        roster_ID = 1
+    query = 'INSERT INTO roster (ID, user_ID, ishost) VALUES ('
+    query += str(roster_ID) + ',' + str(host_ID) + ',True)'
+    sql_engine.connect().execute(query)
+    print('Roster ' + str(roster_ID) + ' inserted successfully.')
+    return roster_ID
+
+def get_roster(roster_ID):
+    query = 'SELECT * FROM roster WHERE ID=' + str(roster_ID)
+    return pd.read_sql(sql=query,con=sql_engine)
 
 class Court():
     def __init__(self,ID):
@@ -246,6 +239,22 @@ def plot_all_courts():
     gmap.apikey = maps_API_key
     gmap.draw('C:\\Users\\camel\\Documents\\Git\\PickUp\\gmap.html')
 
+class Game():
+    def __init__(self,ID):
+        self.ID = ID
+        self.refresh()
+
+    def refresh(self):
+        query = '''SELECT * FROM game
+               WHERE ID=''' + str(self.ID)
+        df = pd.read_sql(sql=query, con=sql_engine)
+        self.court_ID = df.loc[0,'court_ID']
+        self.roster_ID = df.loc[0,'roster_ID']
+        self.reservation_ID = df.loc[0, 'reservation_ID']
+        self.start_ts = df.loc[0,'start_ts']
+        self.end_ts = df.loc[0,'end_ts']
+        self.matches = df.loc[0,'matches']
+
 def insert_game(court_ID,roster_ID,start_ts,ts_length,matches=1,reservation_ID=None):
     max_ID = pd.read_sql(sql='SELECT MAX(ID) FROM game', con=sql_engine).iloc[0,0]
     if max_ID is not None:
@@ -263,22 +272,16 @@ def insert_game(court_ID,roster_ID,start_ts,ts_length,matches=1,reservation_ID=N
     print('Court ' + str(ID) + ' inserted successfully.')
     return ID
 
-class Game():
-    def __init__(self,ID):
-        self.ID = ID
-        self.refresh()
-
-    def refresh(self):
-        query = '''SELECT * FROM game
-               WHERE ID=''' + str(self.ID)
-        df = pd.read_sql(sql=query, con=sql_engine)
-        self.court_ID = df.loc[0,'court_ID']
-        self.roster_ID = df.loc[0,'roster_ID']
-        self.reservation_ID = df.loc[0, 'reservation_ID']
-        self.start_ts = df.loc[0,'start_ts']
-        self.end_ts = df.loc[0,'end_ts']
-        self.matches = df.loc[0,'matches']
-
+'''
+def get_games(ts_range=None):
+    query = 'SELECT * FROM game'
+    params = []
+    if ts_range is not None:
+        start_ts = ts_range[0]
+        end_ts = ts_range[1]
+        if start_ts:
+            params.append('')
+'''
 
 #print(get_table_df('user'))
 #print(gmaps.geocode('Brittingham Park - Basketball Court'))
